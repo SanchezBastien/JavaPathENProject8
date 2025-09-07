@@ -12,50 +12,69 @@ import org.slf4j.LoggerFactory;
 import com.openclassrooms.tourguide.service.TourGuideService;
 import com.openclassrooms.tourguide.user.User;
 
+/**
+ * Tracker : met à jour régulièrement la localisation des utilisateurs.
+ * Optimisé pour supporter la charge massive grâce à un pool de threads.
+ */
 public class Tracker extends Thread {
-	private Logger logger = LoggerFactory.getLogger(Tracker.class);
-	private static final long trackingPollingInterval = TimeUnit.MINUTES.toSeconds(5);
-	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-	private final TourGuideService tourGuideService;
-	private boolean stop = false;
+    private Logger logger = LoggerFactory.getLogger(Tracker.class);
 
-	public Tracker(TourGuideService tourGuideService) {
-		this.tourGuideService = tourGuideService;
+    private static final long trackingPollingInterval = TimeUnit.MINUTES.toSeconds(5);
 
-		executorService.submit(this);
-	}
+    // Utilisation d’un pool multi-thread pour paralléliser
+    private final ExecutorService executorService = Executors.newFixedThreadPool(100);
 
-	/**
-	 * Assures to shut down the Tracker thread
-	 */
-	public void stopTracking() {
-		stop = true;
-		executorService.shutdownNow();
-	}
+    private final TourGuideService tourGuideService;
+    private boolean stop = false;
 
-	@Override
-	public void run() {
-		StopWatch stopWatch = new StopWatch();
-		while (true) {
-			if (Thread.currentThread().isInterrupted() || stop) {
-				logger.debug("Tracker stopping");
-				break;
-			}
+    public Tracker(TourGuideService tourGuideService) {
+        this.tourGuideService = tourGuideService;
+        // lance le thread
+        executorService.submit(this);
+    }
 
-			List<User> users = tourGuideService.getAllUsers();
-			logger.debug("Begin Tracker. Tracking " + users.size() + " users.");
-			stopWatch.start();
-			users.forEach(u -> tourGuideService.trackUserLocation(u));
-			stopWatch.stop();
-			logger.debug("Tracker Time Elapsed: " + TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()) + " seconds.");
-			stopWatch.reset();
-			try {
-				logger.debug("Tracker sleeping");
-				TimeUnit.SECONDS.sleep(trackingPollingInterval);
-			} catch (InterruptedException e) {
-				break;
-			}
-		}
+    /**
+     * Assure l'arrêt du Tracker proprement
+     */
+    public void stopTracking() {
+        stop = true;
+        executorService.shutdownNow();
+    }
 
-	}
+    @Override
+    public void run() {
+        StopWatch stopWatch = new StopWatch();
+
+        while (true) {
+            if (Thread.currentThread().isInterrupted() || stop) {
+                logger.debug("Tracker stopping");
+                break;
+            }
+
+            List<User> users = tourGuideService.getAllUsers();
+            logger.debug("Begin Tracker. Tracking " + users.size() + " users.");
+
+            stopWatch.start();
+
+            // Exécution en parallèle des mises à jour de localisation
+            users.parallelStream().forEach(user -> {
+                try {
+                    tourGuideService.trackUserLocation(user);
+                } catch (Exception e) {
+                    logger.error("Error tracking user " + user.getUserName(), e);
+                }
+            });
+
+            stopWatch.stop();
+            logger.debug("Tracker Time Elapsed: {} seconds.", TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
+            stopWatch.reset();
+
+            try {
+                logger.debug("Tracker sleeping");
+                TimeUnit.SECONDS.sleep(trackingPollingInterval);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+    }
 }

@@ -1,12 +1,13 @@
 package com.openclassrooms.tourguide;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import com.openclassrooms.tourguide.NearbyAttractionDTO;
 import gpsUtil.location.Attraction;
 import gpsUtil.location.VisitedLocation;
 
@@ -16,50 +17,65 @@ import com.openclassrooms.tourguide.user.UserReward;
 
 import tripPricer.Provider;
 
+/**
+ * REST Controller pour l'application TourGuide
+ */
 @RestController
 public class TourGuideController {
 
-	@Autowired
-	TourGuideService tourGuideService;
-	
+    @Autowired
+    TourGuideService tourGuideService;
+
     @RequestMapping("/")
     public String index() {
         return "Greetings from TourGuide!";
     }
-    
-    @RequestMapping("/getLocation") 
+
+    @RequestMapping("/getLocation")
     public VisitedLocation getLocation(@RequestParam String userName) {
-    	return tourGuideService.getUserLocation(getUser(userName));
+        return tourGuideService.getUserLocation(getUser(userName));
     }
-    
-    //  TODO: Change this method to no longer return a List of Attractions.
- 	//  Instead: Get the closest five tourist attractions to the user - no matter how far away they are.
- 	//  Return a new JSON object that contains:
-    	// Name of Tourist attraction, 
-        // Tourist attractions lat/long, 
-        // The user's location lat/long, 
-        // The distance in miles between the user's location and each of the attractions.
-        // The reward points for visiting each Attraction.
-        //    Note: Attraction reward points can be gathered from RewardsCentral
-    @RequestMapping("/getNearbyAttractions") 
-    public List<Attraction> getNearbyAttractions(@RequestParam String userName) {
-    	VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName));
-    	return tourGuideService.getNearByAttractions(visitedLocation);
+
+    /**
+     * Retourne les 5 attractions touristiques les plus proches de l'utilisateur.
+     *
+     * Réponse JSON inclut :
+     * - Nom de l'attraction
+     * - Coordonnées attraction (lat, lon)
+     * - Coordonnées utilisateur (lat, lon)
+     * - Distance en miles
+     * - Points de récompense
+     */
+    @RequestMapping("/getNearbyAttractions")
+    public List<NearbyAttractionDTO> getNearbyAttractions(@RequestParam String userName) {
+        User user = getUser(userName);
+        VisitedLocation visitedLocation = tourGuideService.getUserLocation(user);
+
+        return tourGuideService.getNearByAttractions(visitedLocation).stream()
+                .limit(5)
+                .map(attraction -> new NearbyAttractionDTO(
+                        attraction.attractionName,
+                        attraction.latitude,
+                        attraction.longitude,
+                        visitedLocation.location.latitude,
+                        visitedLocation.location.longitude,
+                        tourGuideService.getDistance(visitedLocation.location, attraction),
+                        tourGuideService.getRewardPoints(attraction, user)
+                ))
+                .collect(Collectors.toList());
     }
-    
-    @RequestMapping("/getRewards") 
+
+    @RequestMapping("/getRewards")
     public List<UserReward> getRewards(@RequestParam String userName) {
-    	return tourGuideService.getUserRewards(getUser(userName));
+        return tourGuideService.getUserRewards(getUser(userName));
     }
-       
+
     @RequestMapping("/getTripDeals")
     public List<Provider> getTripDeals(@RequestParam String userName) {
-    	return tourGuideService.getTripDeals(getUser(userName));
+        return tourGuideService.getTripDeals(getUser(userName));
     }
-    
-    private User getUser(String userName) {
-    	return tourGuideService.getUser(userName);
-    }
-   
 
+    private User getUser(String userName) {
+        return tourGuideService.getUser(userName);
+    }
 }
