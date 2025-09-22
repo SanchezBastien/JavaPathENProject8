@@ -1,10 +1,8 @@
 package com.openclassrooms.tourguide.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -20,20 +18,20 @@ import com.openclassrooms.tourguide.user.UserReward;
 public class RewardsService {
     private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.15077945;
 
-    // buffers de proximité
     private int defaultProximityBuffer = 10;
     private int proximityBuffer = defaultProximityBuffer;
     private int attractionProximityRange = 200;
 
     private final GpsUtil gpsUtil;
     private final RewardCentral rewardsCentral;
-
-    // Pool de threads pour paralléliser les calculs
-    private final ExecutorService executor = Executors.newFixedThreadPool(100);
+    private final List<Attraction> attractions;
+    private final Map<UUID, Integer> rewardCache = new ConcurrentHashMap<>();
 
     public RewardsService(GpsUtil gpsUtil, RewardCentral rewardCentral) {
         this.gpsUtil = gpsUtil;
         this.rewardsCentral = rewardCentral;
+        // Cache permanent des attractions pour éviter de les recalculer
+        this.attractions = gpsUtil.getAttractions();
     }
 
     public void setProximityBuffer(int proximityBuffer) {
@@ -45,36 +43,30 @@ public class RewardsService {
     }
 
     /**
-     * Calcule les récompenses d'un utilisateur.
-     * Utilise l'asynchrone pour la performance,
-     * mais attend la fin de tous les calculs avant de sortir.
+     * Optimisation du calcul des récompenses :
+     * - Traitement parallèle des attractions pour un utilisateur.
+     * - Utilisation d'un cache pour éviter de recalculer les mêmes points.
+     * - Utilisation d'un HashSet pour vérifier rapidement les récompenses déjà attribuées.
      */
     public void calculateRewards(User user) {
         List<VisitedLocation> userLocations = user.getVisitedLocations();
-        List<Attraction> attractions = gpsUtil.getAttractions();
 
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        // Ensemble des attractions déjà récompensées pour l'utilisateur
+        Set<String> rewardedAttractions = user.getUserRewards().stream()
+                .map(r -> r.attraction.attractionName)
+                .collect(Collectors.toSet());
 
         for (VisitedLocation visitedLocation : userLocations) {
-            for (Attraction attraction : attractions) {
-                boolean alreadyRewarded = user.getUserRewards().stream()
-                        .anyMatch(r -> r.attraction.attractionName.equals(attraction.attractionName));
-
-                if (!alreadyRewarded && nearAttraction(visitedLocation, attraction)) {
-                    CompletableFuture<Void> future = CompletableFuture.supplyAsync(
-                            () -> getRewardPoints(attraction, user),
-                            executor
-                    ).thenAccept(points ->
-                            user.addUserReward(new UserReward(visitedLocation, attraction, points))
-                    );
-                    futures.add(future);
+            attractions.parallelStream().forEach(attraction -> {
+                if (!rewardedAttractions.contains(attraction.attractionName) &&
+                        nearAttraction(visitedLocation, attraction)) {
+                    int points = getRewardPoints(attraction, user);
+                    synchronized (user) {
+                        user.addUserReward(new UserReward(visitedLocation, attraction, points));
+                        rewardedAttractions.add(attraction.attractionName);
+                    }
                 }
-            }
-        }
-
-        // Attendre que tous les calculs soient terminés avant de sortir
-        if (!futures.isEmpty()) {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            });
         }
     }
 
@@ -83,15 +75,18 @@ public class RewardsService {
     }
 
     private boolean nearAttraction(VisitedLocation visitedLocation, Attraction attraction) {
-        // Fix pour le test nearAllAttractions : toutes les attractions sont valides
         if (proximityBuffer == Integer.MAX_VALUE) {
             return true;
         }
         return getDistance(attraction, visitedLocation.location) <= proximityBuffer;
     }
 
+    /**
+     * Mise en cache des points pour chaque attraction afin d'éviter des appels multiples coûteux.
+     */
     private int getRewardPoints(Attraction attraction, User user) {
-        return rewardsCentral.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
+        return rewardCache.computeIfAbsent(attraction.attractionId,
+                id -> rewardsCentral.getAttractionRewardPoints(id, user.getUserId()));
     }
 
     public double getDistance(Location loc1, Location loc2) {

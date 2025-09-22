@@ -57,27 +57,47 @@ public class TourGuideService {
 
     /* ================== API methods ================== */
 
+    /**
+     * Retourne la liste des rewards d'un utilisateur.
+     */
     public List<UserReward> getUserRewards(User user) {
+        rewardsService.calculateRewards(user);
         return user.getUserRewards();
     }
 
+    /**
+     * Récupère la dernière position connue d'un utilisateur
+     * ou lance un tracking si aucun historique n'est présent.
+     */
     public VisitedLocation getUserLocation(User user) {
         return (user.getVisitedLocations().size() > 0) ?
                 user.getLastVisitedLocation() : trackUserLocation(user);
     }
 
+    /**
+     * Recherche un utilisateur par son nom.
+     */
     public User getUser(String userName) {
         return internalUserMap.get(userName);
     }
 
+    /**
+     * Retourne la liste de tous les utilisateurs suivis.
+     */
     public List<User> getAllUsers() {
         return new ArrayList<>(internalUserMap.values());
     }
 
+    /**
+     * Ajoute un utilisateur au système.
+     */
     public void addUser(User user) {
         internalUserMap.putIfAbsent(user.getUserName(), user);
     }
 
+    /**
+     * Calcule et retourne les offres de voyages adaptées à l'utilisateur.
+     */
     public List<Provider> getTripDeals(User user) {
         int cumulativeRewardPoints = user.getUserRewards().stream()
                 .mapToInt(UserReward::getRewardPoints)
@@ -96,6 +116,9 @@ public class TourGuideService {
         return providers;
     }
 
+    /**
+     * Suit la position d'un utilisateur et calcule les récompenses.
+     */
     public VisitedLocation trackUserLocation(User user) {
         VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());
         user.addToVisitedLocations(visitedLocation);
@@ -104,7 +127,7 @@ public class TourGuideService {
     }
 
     /**
-     * Retourne les 5 attractions les plus proches du point visité.
+     * Retourne les 5 attractions les plus proches d'une position donnée.
      */
     public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation) {
         return gpsUtil.getAttractions().stream()
@@ -115,7 +138,7 @@ public class TourGuideService {
     }
 
     /**
-     * Calcule la distance (miles) entre une position et une attraction.
+     * Calcule la distance (miles) entre deux points.
      */
     public double getDistance(Location loc1, Location loc2) {
         double lat1 = Math.toRadians(loc1.latitude);
@@ -125,10 +148,14 @@ public class TourGuideService {
 
         double angle = Math.acos(Math.sin(lat1) * Math.sin(lat2)
                 + Math.cos(lat1) * Math.cos(lat2) * Math.cos(lon1 - lon2));
+
         double nauticalMiles = 60 * Math.toDegrees(angle);
-        return 1.15077945 * nauticalMiles; // miles
+        return 1.15077945 * nauticalMiles; // conversion en miles
     }
 
+    /**
+     * Distance entre une position et une attraction.
+     */
     public double getDistance(Location loc, Attraction attraction) {
         return getDistance(loc, new Location(attraction.latitude, attraction.longitude));
     }
@@ -146,6 +173,9 @@ public class TourGuideService {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> tracker.stopTracking()));
     }
 
+    /**
+     * Initialise des utilisateurs internes pour les tests de performance.
+     */
     private void initializeInternalUsers() {
         IntStream.range(0, InternalTestHelper.getInternalUserNumber()).forEach(i -> {
             String userName = "internalUser" + i;
@@ -156,6 +186,9 @@ public class TourGuideService {
         logger.debug("Created " + InternalTestHelper.getInternalUserNumber() + " internal test users.");
     }
 
+    /**
+     * Génère un historique aléatoire de 3 positions pour un utilisateur.
+     */
     private void generateUserLocationHistory(User user) {
         IntStream.range(0, 3).forEach(i -> user.addToVisitedLocations(
                 new VisitedLocation(
