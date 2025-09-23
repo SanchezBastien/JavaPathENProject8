@@ -45,23 +45,29 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Dépendances locales installées -->
+        <!-- Dépendances locales dans libs/ -->
         <dependency>
             <groupId>com.tourguide</groupId>
-            <artifactId>gpsUtil</artifactId>
+            <artifactId>gpsutil</artifactId>
             <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/gpsUtil.jar</systemPath>
         </dependency>
 
         <dependency>
             <groupId>com.tourguide</groupId>
-            <artifactId>tripPricer</artifactId>
+            <artifactId>trippricer</artifactId>
             <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/TripPricer.jar</systemPath>
         </dependency>
 
         <dependency>
             <groupId>com.tourguide</groupId>
-            <artifactId>rewardCentral</artifactId>
+            <artifactId>rewardcentral</artifactId>
             <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/RewardCentral.jar</systemPath>
         </dependency>
     </dependencies>
 
