@@ -33,13 +33,6 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
-
-      # Debug
-      - name: Debug list files
-         working-directory: TourGuide
-          run: |
-    echo "Listing contents of libs directory:"
-    ls -R
   
       # 4. Installer les JAR locaux dans Maven
       - name: Install local jars
