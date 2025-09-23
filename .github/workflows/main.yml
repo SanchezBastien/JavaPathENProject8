@@ -14,18 +14,15 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1. Récupérer le code source
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # 2. Installer Java 17
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3. Cache Maven pour accélérer les builds
       - name: Cache Maven dependencies
         uses: actions/cache@v4
         with:
@@ -34,19 +31,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 4. Installer les JARs dans Maven
-      - name: Install custom JARs into Maven
-        run: |
-          mvn -f NUL install:install-file -Dfile=TourGuide/libs/gpsUtil.jar -DgroupId=com.tourguide -DartifactId=gpsutil -Dversion=1.0.0 -Dpackaging=jar -DgeneratePom=true
-          mvn -f NUL install:install-file -Dfile=TourGuide/libs/TripPricer.jar -DgroupId=com.tourguide -DartifactId=trippricer -Dversion=1.0.0 -Dpackaging=jar -DgeneratePom=true
-          mvn -f NUL install:install-file -Dfile=TourGuide/libs/RewardCentral.jar -DgroupId=com.tourguide -DartifactId=rewardcentral -Dversion=1.0.0 -Dpackaging=jar -DgeneratePom=true
-
-      # 5. Compiler et tester le projet principal TourGuide
       - name: Build and run tests
         run: mvn clean install --batch-mode
         working-directory: TourGuide
 
-      # 6. Sauvegarder le JAR final
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
