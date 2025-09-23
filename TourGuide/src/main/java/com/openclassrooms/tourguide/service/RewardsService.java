@@ -18,7 +18,7 @@ import com.openclassrooms.tourguide.user.UserReward;
 public class RewardsService {
     private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.15077945;
 
-    private int defaultProximityBuffer = 10;
+    private int defaultProximityBuffer = 10000;
     private int proximityBuffer = defaultProximityBuffer;
     private int attractionProximityRange = 200;
 

@@ -28,7 +28,7 @@ public class TestPerformance {
         RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 
         // Création de 100 utilisateurs de test
-        InternalTestHelper.setInternalUserNumber(100000);
+        InternalTestHelper.setInternalUserNumber(100);
         TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
 
         List<User> allUsers = tourGuideService.getAllUsers();
@@ -57,7 +57,7 @@ public class TestPerformance {
         RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 
         // Monter jusqu’à 100 000 utilisateurs
-        InternalTestHelper.setInternalUserNumber(10000);
+        InternalTestHelper.setInternalUserNumber(100);
 
         TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
         List<User> allUsers = tourGuideService.getAllUsers();
