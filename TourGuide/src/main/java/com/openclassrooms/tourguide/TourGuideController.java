@@ -18,7 +18,12 @@ import com.openclassrooms.tourguide.user.UserReward;
 import tripPricer.Provider;
 
 /**
- * REST Controller pour l'application TourGuide
+ * Contrôleur principal de l'application TourGuide.
+ * Fournit des points d'accès (endpoints) REST permettant de gérer les
+ * fonctionnalités principales de l'application, telles que :
+ *   Récupérer la localisation actuelle d'un utilisateur
+ *   Récupérer les attractions les plus proches
+ *   Consulter les récompenses d'un utilisateur
  */
 @RestController
 public class TourGuideController {
@@ -31,6 +36,11 @@ public class TourGuideController {
         return "Greetings from TourGuide!";
     }
 
+    /**
+     * Endpoint pour obtenir la localisation actuelle d'un utilisateur.
+     * @param userName le nom de l'utilisateur
+     * @return un objet {@link VisitedLocation} contenant la localisation actuelle
+     */
     @RequestMapping("/getLocation")
     public VisitedLocation getLocation(@RequestParam String userName) {
         return tourGuideService.getUserLocation(getUser(userName));
@@ -65,6 +75,11 @@ public class TourGuideController {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Endpoint pour obtenir la liste des récompenses d'un utilisateur
+     * @param userName le nom de l'utilisateur
+     * @return une liste d'objets {@link com.openclassrooms.tourguide.user.UserReward} représentant les récompenses
+     */
     @RequestMapping("/getRewards")
     public List<UserReward> getRewards(@RequestParam String userName) {
         return tourGuideService.getUserRewards(getUser(userName));

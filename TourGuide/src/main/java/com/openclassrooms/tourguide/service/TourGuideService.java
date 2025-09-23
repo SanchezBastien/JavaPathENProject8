@@ -24,6 +24,11 @@ import rewardCentral.RewardCentral;
 import tripPricer.Provider;
 import tripPricer.TripPricer;
 
+/**
+ * Service principal gérant les fonctionnalités du guide touristique
+ * Ce service s'occupe du suivi des utilisateurs, du calcul des récompenses,
+ * et de la génération d'offres de voyages personnalisées
+ */
 @Service
 public class TourGuideService {
     private Logger logger = LoggerFactory.getLogger(TourGuideService.class);
@@ -39,6 +44,11 @@ public class TourGuideService {
     private static final String tripPricerApiKey = "test-server-api-key";
     private final Map<String, User> internalUserMap = new HashMap<>();
 
+    /**
+     * Constructeur du service TourGuide.
+     * @param gpsUtil Service de localisation GPS.
+     * @param rewardsService Service de calcul des récompenses.
+     */
     public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService) {
         this.gpsUtil = gpsUtil;
         this.rewardsService = rewardsService;
@@ -58,7 +68,9 @@ public class TourGuideService {
     /* ================== API methods ================== */
 
     /**
-     * Retourne la liste des rewards d'un utilisateur.
+     * Récupère la liste des récompenses obtenues par un utilisateur
+     * @param user L'utilisateur cible
+     * @return La liste des {@link UserReward} de l'utilisateur
      */
     public List<UserReward> getUserRewards(User user) {
         rewardsService.calculateRewards(user);
@@ -67,7 +79,9 @@ public class TourGuideService {
 
     /**
      * Récupère la dernière position connue d'un utilisateur
-     * ou lance un tracking si aucun historique n'est présent.
+     * Si aucune position n'est enregistrée, une nouvelle localisation est suivie
+     * @param user L'utilisateur dont la position est demandée
+     * @return La dernière localisation visitée
      */
     public VisitedLocation getUserLocation(User user) {
         return (user.getVisitedLocations().size() > 0) ?
@@ -76,6 +90,8 @@ public class TourGuideService {
 
     /**
      * Recherche un utilisateur par son nom.
+     * @param userName Nom de l'utilisateur.
+     * @return L'utilisateur trouvé ou {@code null} si inexistant.
      */
     public User getUser(String userName) {
         return internalUserMap.get(userName);
@@ -96,7 +112,9 @@ public class TourGuideService {
     }
 
     /**
-     * Calcule et retourne les offres de voyages adaptées à l'utilisateur.
+     * Calcule et retourne les offres de voyage personnalisées pour un utilisateur
+     * @param user L'utilisateur cible
+     * @return La liste des fournisseurs avec leurs offres
      */
     public List<Provider> getTripDeals(User user) {
         int cumulativeRewardPoints = user.getUserRewards().stream()
@@ -117,7 +135,9 @@ public class TourGuideService {
     }
 
     /**
-     * Suit la position d'un utilisateur et calcule les récompenses.
+     * Suit la position actuelle d'un utilisateur et met à jour ses récompenses
+     * @param user L'utilisateur à suivre
+     * @return La nouvelle localisation visitée
      */
     public VisitedLocation trackUserLocation(User user) {
         VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());
@@ -127,7 +147,9 @@ public class TourGuideService {
     }
 
     /**
-     * Retourne les 5 attractions les plus proches d'une position donnée.
+     * Récupère les cinq attractions les plus proches de la localisation donnée.
+     * @param visitedLocation Localisation de départ.
+     * @return Une liste des attractions les plus proches.
      */
     public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation) {
         return gpsUtil.getAttractions().stream()
@@ -138,7 +160,10 @@ public class TourGuideService {
     }
 
     /**
-     * Calcule la distance (miles) entre deux points.
+     * Calcule la distance (en miles) entre deux localisations géographiques
+     * @param loc1 Première localisation
+     * @param loc2 Deuxième localisation
+     * @return La distance en miles
      */
     public double getDistance(Location loc1, Location loc2) {
         double lat1 = Math.toRadians(loc1.latitude);
@@ -154,14 +179,20 @@ public class TourGuideService {
     }
 
     /**
-     * Distance entre une position et une attraction.
+     * Calcule la distance entre une localisation et une attraction.
+     * @param loc Localisation de départ.
+     * @param attraction Attraction cible.
+     * @return La distance en miles.
      */
     public double getDistance(Location loc, Attraction attraction) {
         return getDistance(loc, new Location(attraction.latitude, attraction.longitude));
     }
 
     /**
-     * Retourne les points de récompense pour une attraction donnée.
+     * Récupère les points de récompense associés à une attraction pour un utilisateur donné.
+     * @param attraction L'attraction ciblée.
+     * @param user L'utilisateur concerné.
+     * @return Le nombre de points de récompense.
      */
     public int getRewardPoints(Attraction attraction, User user) {
         return rewardCentral.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
@@ -169,6 +200,9 @@ public class TourGuideService {
 
     /* ================== Internal/test methods ================== */
 
+    /**
+     * Ajoute un hook pour arrêter proprement le tracker lors de l'arrêt de l'application.
+     */
     private void addShutDownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> tracker.stopTracking()));
     }
@@ -199,14 +233,26 @@ public class TourGuideService {
         ));
     }
 
+    /**
+     * Génère une longitude aléatoire
+     * @return Une valeur comprise entre -180 et 180
+     */
     private double generateRandomLongitude() {
         return -180 + new Random().nextDouble() * 360;
     }
 
+    /**
+     * Génère une latitude aléatoire
+     * @return Une valeur comprise entre -85.05112878 et 85.05112878
+     */
     private double generateRandomLatitude() {
         return -85.05112878 + new Random().nextDouble() * 170.10225756;
     }
 
+    /**
+     * Génère une date aléatoire dans les 30 derniers jours
+     * @return Une date générée aléatoirement
+     */
     private Date getRandomTime() {
         LocalDateTime localDateTime = LocalDateTime.now().minusDays(new Random().nextInt(30));
         return Date.from(localDateTime.toInstant(ZoneOffset.UTC));

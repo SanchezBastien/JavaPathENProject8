@@ -19,8 +19,17 @@ import com.openclassrooms.tourguide.service.TourGuideService;
 import com.openclassrooms.tourguide.user.User;
 import tripPricer.Provider;
 
+/**
+ * Classe de test pour le service TourGuideService.
+ * Ces tests vérifient la logique métier du service, incluant
+ * la récupération de la localisation d'un utilisateur
+ * la suggestion d'attractions et la gestion des récompenses
+ */
 public class TestTourGuideService {
 
+    /**
+     * Vérifie que la localisation actuelle de l'utilisateur est correctement récupérée.
+     */
 	@Test
 	public void getUserLocation() {
 		GpsUtil gpsUtil = new GpsUtil();
@@ -34,6 +43,9 @@ public class TestTourGuideService {
 		assertTrue(visitedLocation.userId.equals(user.getUserId()));
 	}
 
+    /**
+     * Vérifie que l'utilisateur peut être ajouté et récupéré correctement dans le service.
+     */
 	@Test
 	public void addUser() {
 		GpsUtil gpsUtil = new GpsUtil();
@@ -56,6 +68,9 @@ public class TestTourGuideService {
 		assertEquals(user2, retrivedUser2);
 	}
 
+    /**
+     * Vérifie que la liste des utilisateurs enregistrés n'est pas vide.
+     */
 	@Test
 	public void getAllUsers() {
 		GpsUtil gpsUtil = new GpsUtil();
@@ -77,6 +92,10 @@ public class TestTourGuideService {
 		assertTrue(allUsers.contains(user2));
 	}
 
+    /**
+     * Vérifie que la méthode permettant de suivre la localisation
+     * de plusieurs utilisateurs fonctionne correctement
+     */
 	@Test
 	public void trackUser() {
 		GpsUtil gpsUtil = new GpsUtil();
@@ -92,7 +111,9 @@ public class TestTourGuideService {
 		assertEquals(user.getUserId(), visitedLocation.userId);
 	}
 
-	 // Not yet implemented
+    /**
+     * Vérifie que les cinq attractions les plus proches sont bien récupérées pour l'utilisateur
+     */
 	@Test
 	public void getNearbyAttractions() {
 		GpsUtil gpsUtil = new GpsUtil();

@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import gpsUtil.GpsUtil;
@@ -20,8 +19,17 @@ import com.openclassrooms.tourguide.service.TourGuideService;
 import com.openclassrooms.tourguide.user.User;
 import com.openclassrooms.tourguide.user.UserReward;
 
+/**
+ * Classe de test pour le service de gestion des récompenses.
+ * Ces tests vérifient la logique de calcul et d'attribution des récompenses
+ * aux utilisateurs en fonction de leur position et des attractions visitées.
+ */
 public class TestRewardsService {
 
+    /**
+     * Vérifie que l'utilisateur reçoit une récompense lorsqu'il se trouve
+     * à la même localisation qu'une attraction.
+     */
 	@Test
 	public void userGetRewards() {
 		GpsUtil gpsUtil = new GpsUtil();
@@ -47,7 +55,10 @@ public class TestRewardsService {
 		assertTrue(rewardsService.isWithinAttractionProximity(attraction, attraction));
 	}
 
-	 // Fixed
+    /**
+     * Vérifie que le paramètre de proximité par défaut est utilisé
+     * pour calculer les récompenses.
+     */
 	@Test
 	public void nearAllAttractions() {
 		GpsUtil gpsUtil = new GpsUtil();

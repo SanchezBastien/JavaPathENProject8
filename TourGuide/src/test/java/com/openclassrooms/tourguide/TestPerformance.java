@@ -20,7 +20,19 @@ import com.openclassrooms.tourguide.service.RewardsService;
 import com.openclassrooms.tourguide.service.TourGuideService;
 import com.openclassrooms.tourguide.user.User;
 
+/**
+ * Classe de test de performance pour l'application TourGuide
+ * Ces tests permettent de mesurer la scalabilité et la robustesse
+ * du système sous une charge élevée. Ils simulent un grand nombre
+ * d'utilisateurs afin de vérifier la tenue en charge des services
+ */
 public class TestPerformance {
+
+    /**
+     * Teste la performance du suivi de la localisation pour un grand nombre d'utilisateurs.
+     * Ce test mesure le temps nécessaire pour localiser tous les utilisateurs
+     * et vérifie qu'il reste inférieur à 15 minutes.
+     */
 
     @Test
     public void highVolumeTrackLocation() {
@@ -51,6 +63,12 @@ public class TestPerformance {
         assertTrue(TimeUnit.MINUTES.toSeconds(15) >= TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
     }
 
+    /**
+     * Teste les performances de la génération des récompenses
+     * Ce test crée un grand nombre d'utilisateurs, simule des visites
+     * et vérifie que les récompenses sont calculées dans un temps
+     * inférieur au seuil fixé (20 minutes)
+     */
     @Test
     public void highVolumeGetRewards() {
         GpsUtil gpsUtil = new GpsUtil();
