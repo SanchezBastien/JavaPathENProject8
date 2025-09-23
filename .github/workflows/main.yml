@@ -34,11 +34,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 4. Compiler et exécuter les tests depuis la racine du projet
+      # 4. Installer les JAR locaux dans Maven
+      - name: Install local jars
+        working-directory: TourGuide
+        run: |
+          mvn install:install-file -Dfile=libs/gpsUtil.jar -DgroupId=com.tourguide -DartifactId=gpsutil -Dversion=1.0.0 -Dpackaging=jar
+          mvn install:install-file -Dfile=libs/TripPricer.jar -DgroupId=com.tourguide -DartifactId=trippricer -Dversion=1.0.0 -Dpackaging=jar
+          mvn install:install-file -Dfile=libs/RewardCentral.jar -DgroupId=com.tourguide -DartifactId=rewardcentral -Dversion=1.0.0 -Dpackaging=jar
+
+      # 5. Compiler et exécuter les tests
       - name: Build and run tests
         run: mvn -f TourGuide/pom.xml clean install --batch-mode
 
-      # 5. Sauvegarder le JAR final
+      # 6. Sauvegarder le JAR final
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
