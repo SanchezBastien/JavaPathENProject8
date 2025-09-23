@@ -34,12 +34,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 4. Installer les JARs locaux dans Maven
+      # 4. Installer les JARs dans le repo Maven local
       - name: Install custom JARs into Maven
         run: |
-          mvn install:install-file -Dfile=TourGuide/libs/gpsUtil.jar -DgroupId=com.tourguide -DartifactId=gpsutil -Dversion=1.0.0 -Dpackaging=jar
-          mvn install:install-file -Dfile=TourGuide/libs/TripPricer.jar -DgroupId=com.tourguide -DartifactId=trippricer -Dversion=1.0.0 -Dpackaging=jar
-          mvn install:install-file -Dfile=TourGuide/libs/RewardCentral.jar -DgroupId=com.tourguide -DartifactId=rewardcentral -Dversion=1.0.0 -Dpackaging=jar
+          mvn install:install-file -Dfile=TourGuide/libs/gpsUtil.jar -DgroupId=com.tourguide -DartifactId=gpsutil -Dversion=1.0.0 -Dpackaging=jar -DgeneratePom=true
+          mvn install:install-file -Dfile=TourGuide/libs/TripPricer.jar -DgroupId=com.tourguide -DartifactId=trippricer -Dversion=1.0.0 -Dpackaging=jar -DgeneratePom=true
+          mvn install:install-file -Dfile=TourGuide/libs/RewardCentral.jar -DgroupId=com.tourguide -DartifactId=rewardcentral -Dversion=1.0.0 -Dpackaging=jar -DgeneratePom=true
 
       # 5. Compiler et tester le projet principal TourGuide
       - name: Build and run tests
