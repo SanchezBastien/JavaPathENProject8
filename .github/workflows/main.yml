@@ -34,12 +34,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 4. Compiler et lancer les tests
+      # 4. Compiler et exécuter les tests depuis la racine du projet
       - name: Build and run tests
-        run: mvn clean install --batch-mode
-        working-directory: TourGuide
+        run: mvn -f TourGuide/pom.xml clean install --batch-mode
 
-      # 5. Sauvegarder le JAR généré
+      # 5. Sauvegarder le JAR final
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
