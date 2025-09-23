@@ -34,12 +34,27 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 4. Compiler et lancer les tests (dans le dossier TourGuide)
+      # 4. Installer gpsutil
+      - name: Install gpsutil module
+        run: mvn clean install
+        working-directory: libs/gpsutil
+
+      # 5. Installer trippricer
+      - name: Install trippricer module
+        run: mvn clean install
+        working-directory: libs/trippricer
+
+      # 6. Installer rewardCentral
+      - name: Install rewardCentral module
+        run: mvn clean install
+        working-directory: libs/rewardCentral
+
+      # 7. Compiler et lancer les tests pour TourGuide
       - name: Build and run tests
         run: mvn clean install --batch-mode
         working-directory: TourGuide
 
-      # 5. Sauvegarder le JAR généré
+      # 8. Sauvegarder le JAR généré comme artefact
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
