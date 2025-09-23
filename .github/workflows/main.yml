@@ -11,12 +11,12 @@ on:
 jobs:
   build:
     name: Build & Test
-    runs-on: windows-latest # Runner Windows car tu développes sur Windows
+    runs-on: windows-latest
 
     steps:
-      # 1. Récupérer le code source du dépôt
+      # 1. Récupérer le code source
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # 2. Installer Java 17
       - name: Set up JDK 17
@@ -25,22 +25,22 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3. Cache des dépendances Maven pour accélérer les builds
+      # 3. Cache des dépendances Maven
       - name: Cache Maven dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 4. Compiler le projet et exécuter les tests
+      # 4. Build et tests
       - name: Build and run tests
         run: mvn clean install --batch-mode
 
       # 5. Sauvegarder le JAR généré en tant qu'artefact
       - name: Upload JAR artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tourguide-jar
           path: TourGuide/target/*.jar
