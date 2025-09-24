@@ -1,13 +1,7 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+# Nom du workflow
+name: Pipeline CI/CD avec Docker
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-name: Java CI with Maven
-
+# Déclenchement sur master
 on:
   push:
     branches: [ "master" ]
@@ -16,19 +10,22 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Runner GitHub Actions qui inclut normalement Docker
 
     steps:
-      - uses: actions/checkout@v4
-      
+      # Étape 1 : Récupérer le code source
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Étape 2 : Configurer Java 17
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: 17
+          distribution: temurin
           cache: maven
 
-      # Étape pour installer les jars locaux dans le repository Maven
+      # Étape 3 : Installer les JARs locaux dans le repo Maven
       - name: Install local jars
         working-directory: ./TourGuide
         run: |
@@ -36,7 +33,34 @@ jobs:
           mvn install:install-file -Dfile=libs/TripPricer.jar -DgroupId=com.tourguide -DartifactId=trippricer -Dversion=1.0.0 -Dpackaging=jar
           mvn install:install-file -Dfile=libs/RewardCentral.jar -DgroupId=com.tourguide -DartifactId=rewardcentral -Dversion=1.0.0 -Dpackaging=jar
 
-      # Build Maven
+      # Étape 4 : Compiler et packager le projet avec Maven
       - name: Build with Maven
         working-directory: ./TourGuide
         run: mvn -B package
+
+      # Étape 5 : Lancer les tests unitaires
+      - name: Run tests
+        working-directory: ./TourGuide
+        run: mvn test
+
+      # Étape 6 : Vérifier que Docker est installé et actif
+      - name: Test Docker
+        run: |
+          echo "=== Vérification de Docker ==="
+          docker --version
+          docker info
+
+      # Étape 7 : Connexion à Docker Hub
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Étape 8 : Construire l'image Docker
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/tourguide:latest .
+
+      # Étape 9 : Pousser l'image sur Docker Hub
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/tourguide:latest
